@@ -1,3 +1,4 @@
+import { API_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -9,7 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const API_URL = "lo"
+
 
   const handleLogin = async () => {
     setLoading(true);
@@ -21,7 +22,7 @@ const Login = () => {
         },
         body: JSON.stringify({ email, password }),
       });
-      const result = await response.json();
+            const result = await response.json();
       if (result.status === 'OK') {
         const { name, email, id } = result.data;
         const { access_token, refresh_token } = result;
@@ -87,7 +88,7 @@ const Login = () => {
         <View style={{ alignItems: 'center', marginTop: 8 }}>
           <Text>
             Chưa có tài khoản?{' '}
-            <Text style={styles.registerText} onPress={() => router.push('/Register')}>
+            <Text style={styles.registerText} onPress={() => router.replace('/Register')}>
               Đăng ký
             </Text>
           </Text>

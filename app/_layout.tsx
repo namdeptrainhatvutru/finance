@@ -19,9 +19,14 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack initialRouteName='(tabs)'>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="Group" options={{ headerShown: false }} />
+        <Stack.Screen name="Transaction" options={{ headerShown: false }} />
+        <Stack.Screen name="TransactionDetail" options={{ headerShown: false }} />
+        <Stack.Screen name="TransactionsTypes.js/Expense" />
+        <Stack.Screen name="TransactionsTypes.js/Income" />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
