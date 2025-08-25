@@ -15,8 +15,32 @@ const Expense = ({ group_id, members, transactions, onTransactionCreated,currenc
   const [openDatePicker, setOpenDatePicker] = useState(false);
   const router = useRouter()
 
- 
-  
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+
+
+
+
+  // ...existing code...
+  const handleDeleteTransaction = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/transactions/delete/${id}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+      if (result.success) {
+        onTransactionCreated(); // Refresh list
+        alert('Xóa giao dịch thành công!');
+      } else {
+        alert(result.message || 'Xóa thất bại');
+      }
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+    }
+  };
+// ...existing code...
+
 
   const handleCreateTransaction = async () => {
     if (!selectedMember) {
@@ -32,7 +56,7 @@ const Expense = ({ group_id, members, transactions, onTransactionCreated,currenc
       console.log('date :', formattedDate);
       console.log('api',API_URL);
       
-      const response = await fetch(`http://192.168.1.11:3000/transactions/create`, {
+      const response = await fetch(`${API_URL}/transactions/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,14 +95,39 @@ const Expense = ({ group_id, members, transactions, onTransactionCreated,currenc
     // Navigate to detail screen
     router.push({
       pathname:'../TransactionDetail',
-      params:{item : JSON.stringify(item)}
+      params:{item : JSON.stringify(item), members: JSON.stringify(members)}
 
     });
 
 
   }
 
-
+  const ContextMenu = ({ visible, position, onClose, onDelete }) => {
+    if (!visible) return null;
+    return (
+      <View style={StyleSheet.absoluteFill}>
+        <TouchableOpacity 
+          style={[StyleSheet.absoluteFill, { zIndex: 99 }]}
+          onPress={onClose}
+          activeOpacity={1}
+        >
+          <View style={[
+            styles.menuContainer,
+            {
+              top: position.y -300,
+              left: position.x,
+              position: 'absolute',
+              zIndex: 100,
+            }
+          ]}>
+            <TouchableOpacity style={styles.menuItem} onPress={onDelete}>
+              <Text style={[styles.menuText, styles.deleteText]}>Xóa giao dịch</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -153,17 +202,25 @@ const Expense = ({ group_id, members, transactions, onTransactionCreated,currenc
           data={transactions}
           keyExtractor={item => item.id.toString()}
           renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => handleDetail(item)}>
+            <TouchableOpacity 
+              onPress={() => handleDetail(item)}
+              onLongPress={(event) => {
+                const { pageX, pageY } = event.nativeEvent;
+                setSelectedTransaction(item);
+                setMenuPosition({ x: pageX, y: pageY });
+                setMenuVisible(true);
+              }}
+            >
               <View style={styles.transactionItem}>
                 <Text style={styles.transactionIcon}>{item.icon}</Text>
                 <View style={styles.transactionCenter}>
                   <Text style={styles.transactionTitle}>{item.title}</Text>
                   <Text style={styles.transactionBy}>{item.creator?.name}</Text>
+                </View>
+                <Text style={styles.transactionAmount}>
+                  {Number(item.amount).toLocaleString()}{currency}
+                </Text>
               </View>
-              <Text style={styles.transactionAmount}>
-                {Number(item.amount).toLocaleString()}{currency}
-              </Text>
-            </View>
             </TouchableOpacity>
           )}
         />
@@ -202,6 +259,17 @@ const Expense = ({ group_id, members, transactions, onTransactionCreated,currenc
         </View>
       </Modal>
 
+      <ContextMenu
+        visible={menuVisible}
+        position={menuPosition}
+        onClose={() => setMenuVisible(false)}
+        onDelete={() => {
+          if (selectedTransaction) {
+            handleDeleteTransaction(selectedTransaction.id);
+          }
+          setMenuVisible(false);
+        }}
+      />
     </View>
   );
 };
@@ -302,7 +370,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   selectedMemberItem: {
-    backgroundColor: '#f0f0f0',
+   
   },
   memberName: {
     fontSize: 14,
@@ -318,13 +386,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 8,
     marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+   
     elevation: 2,
   },
   transactionIcon: {
@@ -347,5 +409,31 @@ const styles = StyleSheet.create({
   transactionAmount: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  menuContainer: {
+    position: 'absolute',
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    minWidth: 140,
+    zIndex: 100,
+  },
+  menuItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  menuText: {
+    fontSize: 16,
+  },
+  deleteText: {
+    color: '#ff4444',
   },
 });

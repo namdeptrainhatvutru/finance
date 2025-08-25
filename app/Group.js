@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { Dimensions, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
 import { TabBar, TabView } from 'react-native-tab-view';
 import Transaction from './Transaction';
+import Balances from './Balances';
+import MembersRoute from './TransactionsTypes.js/Members';
 
 const ExpensesRoute = ({ id, title, icon, currency, members }) => (
   <View style={styles.tabContent}>
@@ -11,10 +13,8 @@ const ExpensesRoute = ({ id, title, icon, currency, members }) => (
   </View>
 );
 
-const BalancesRoute = () => (
-  <View style={styles.tabContent}>
-    <Text style={styles.comingSoon}>Tính năng đang phát triển</Text>
-  </View>
+const BalancesRoute = ({id}) => (
+  <Balances id={id}/>
 );
 
 const PhotosRoute = () => (
@@ -23,110 +23,7 @@ const PhotosRoute = () => (
   </View>
 );
 
-const MembersRoute = ({ members, groupId }) => {
-  const [dataUser, setDataUser] = useState([]);
-  const [searchUser, setSearchUser] = useState('');
-  const [usersSelected, setUsersSelected] = useState([]);
-  const [adding, setAdding] = useState(false);
-  useEffect(() => {
-    fetchUser();
-  }, []);
 
-  const fetchUser = async () => {
-    try {
-      const response = await fetch(`${API_URL}/users/all`);
-      const data = await response.json();
-      if (response.ok) {
-        setDataUser(data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching user:', error);
-    }
-  };
-  const handleAddMember = async () => {
-    setAdding(true);
-    try {
-      for (const selectedUser of usersSelected) {
-        const response = await fetch(`${API_URL}/groups/add-member`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            group_id: groupId,
-            user_id: selectedUser.id
-          }),
-        });
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-      }
-      setUsersSelected([]);
-      setSearchUser('');
-      fetchUser();
-    } catch (error) {
-      console.error('Error adding member:', error);
-    }
-    setAdding(false);
-  };
-
-  const filteredUsers = searchUser.length > 0
-    ? dataUser.filter(user => user.name.toLowerCase().includes(searchUser.toLowerCase()) && !members.some(m => m.User.id === user.id) && !usersSelected.some(u => u.id === user.id))
-    : [];
-
-  return (
-    <View style={styles.tabContent}>
-      <Text style={styles.sectionTitle}>Thành viên</Text>
-      <TextInput
-        placeholder='Tìm kiếm user theo tên'
-        value={searchUser}
-        onChangeText={setSearchUser}
-        style={styles.input}
-      />
-      {searchUser.length > 0 && (
-        <View style={styles.dropdownContainer}>
-          <FlatList
-            data={filteredUsers}
-            renderItem={({ item }) => (
-              <View style={styles.dropdownItem}>
-                <Text style={styles.userName}>{item.name}</Text>
-                <Text style={styles.userEmail}>{item.email}</Text>
-                <Text style={styles.addUserBtn} onPress={() => setUsersSelected([...usersSelected, item])}>Thêm</Text>
-              </View>
-            )}
-            keyExtractor={item => item.id.toString()}
-          />
-        </View>
-      )}
-      {usersSelected.length > 0 && (
-        <View style={styles.selectedUsersContainer}>
-          <Text style={styles.sectionTitle}>Thành viên đã chọn:</Text>
-          <View style={styles.selectedUsersList}>
-            {usersSelected.map((user) => (
-              <View key={user.id} style={styles.selectedUserItem}>
-                <Text style={styles.selectedUserName}>{user.name}</Text>
-                <Text style={styles.removeButton} onPress={() => setUsersSelected(usersSelected.filter(u => u.id !== user.id))}>✕</Text>
-              </View>
-            ))}
-          </View>
-          <Text style={styles.addMemberButton} onPress={handleAddMember} disabled={adding}>Thêm thành viên</Text>
-        </View>
-      )}
-      <FlatList
-        data={members}
-        renderItem={({ item }) => (
-          <View style={styles.memberItem}>
-            <View style={styles.memberInfo}>
-              <Text style={styles.memberName}>{item.User.name}</Text>
-              <Text style={styles.memberEmail}>{item.User.email}</Text>
-            </View>
-          </View>
-        )}
-        keyExtractor={item => item.id.toString()}
-      />
-    </View>
-  );
-};
 
 const Group = () => {
     const params = useLocalSearchParams();
@@ -169,11 +66,17 @@ const Group = () => {
         case 'expenses':
           return <ExpensesRoute id={id} title={title} icon={icon} currency={currency} members={members} />;
         case 'balances':
-          return <BalancesRoute />;
+          return <BalancesRoute id={id} />;
         case 'photos':
           return <PhotosRoute />;
         case 'members':
-          return <MembersRoute members={members} groupId={id} onMemberRemoved={fetchMembers} />;
+          return (
+            <MembersRoute
+              members={members}
+              groupId={id}
+              onMemberAdded={fetchMembers} // truyền hàm cập nhật
+            />
+          );
         default:
           return null;
       }

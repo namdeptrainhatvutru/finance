@@ -6,7 +6,8 @@ import Expense from './TransactionsTypes.js/Expense';
 import Income from './TransactionsTypes.js/Income';
 
 const Transaction = ({ id, members,currency }) => {
-
+  
+  
   
   const [index, setIndex] = useState(0);
   const [transactions, setTransactions] = useState([]);
@@ -17,6 +18,8 @@ const Transaction = ({ id, members,currency }) => {
 
   const fetchTransactions = async () => {
     try {
+      
+      
       const response = await fetch(`${API_URL}/transactions/group/${id}`);
       const result = await response.json();
       if (result.success) {
@@ -34,21 +37,25 @@ const Transaction = ({ id, members,currency }) => {
   const renderScene = ({ route }) => {
     switch (route.key) {
       case 'expense':
-        return <Expense 
-          group_id={id} 
-          members={members} 
-          transactions={transactions}
-          onTransactionCreated={fetchTransactions}
-          currency={currency}
-        />;
+        return (
+          <Expense
+            group_id={id}
+            members={members}
+            transactions={transactions.filter(t => t.types === 'expense')}
+            onTransactionCreated={fetchTransactions}
+            currency={currency}
+          />
+        );
       case 'income':
-        return <Income 
-          group_id={id} 
-          members={members} 
-          transactions={transactions}
-          onTransactionCreated={fetchTransactions}
-          currency={currency}
-        />;
+        return (
+          <Income
+            group_id={id}
+            members={members}
+            transactions={transactions.filter(t => t.types === 'income')}
+            onTransactionCreated={fetchTransactions}
+            currency={currency}
+          />
+        );
       default:
         return null;
     }

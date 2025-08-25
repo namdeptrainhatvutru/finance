@@ -19,14 +19,16 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack initialRouteName='(tabs)'>
+      <Stack initialRouteName='SplashScreen'>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="Group" options={{ headerShown: false }} />
         <Stack.Screen name="Transaction" options={{ headerShown: false }} />
         <Stack.Screen name="TransactionDetail" options={{ headerShown: false }} />
+        <Stack.Screen name="SplashScreen" options={{ headerShown: false }} />
         <Stack.Screen name="TransactionsTypes.js/Expense" />
         <Stack.Screen name="TransactionsTypes.js/Income" />
+        <Stack.Screen name="TransactionsTypes.js/constants" />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

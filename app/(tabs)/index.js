@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Button, FlatList, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Thêm dòng này nếu chưa có
 const EMOJIS = [
   // 😀 Cảm xúc vui vẻ
   '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', 
@@ -36,8 +37,10 @@ const index = () => {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [showAddModal, setShowAddModal] = useState(false); // Thêm state này
   const fetchGroups = async () => {
     try{
+      
           const user_id = await AsyncStorage.getItem('user_id');
           setUser_id(String(user_id));
           const response = await fetch(`${API_URL}/groups/user/${user_id}`);
@@ -220,92 +223,134 @@ const index = () => {
 
   return (
     <View style={styles.container}>
-      <TextInput 
-        placeholder='title' 
-        value={title} 
-        onChangeText={setTitle}
-        style={styles.input}
-      />
-      <View style={styles.iconContainer}>
-        <TouchableOpacity 
-          style={styles.iconButton}
-          onPress={() => {setShowEmoji(true)
-          }}
-        >
-          <Text style={{fontSize: 24}}>{icon || '😀'}</Text>
-        </TouchableOpacity>
-        <TextInput 
-          placeholder='currency' 
-          value={currency} 
-          onChangeText={setCurrency}
-          style={[styles.input, {flex: 1}]}
-        />
+
+      <View style={styles.headers}>
+        <Text style={styles.headerTitle}>SplitGo</Text>
+        <Text style={styles.headerSubtitle}>by kenhtao.net</Text>
       </View>
 
 
-      <View style={styles.searchContainer}>
-        <TextInput 
-          placeholder='Tìm kiếm user' 
-          value={searchUser} 
-          onChangeText={setSearchUser}
-          style={styles.input} 
-        />
-        {searchUser.length > 0 && (
-          <View style={styles.dropdownContainer}>
-            <ScrollView style={styles.dropdownList}>
-              {dataUser
-                .filter(user => {
-                  // Kiểm tra user có match với search text không
-                  const matchesSearch = user.name.toLowerCase().includes(searchUser.toLowerCase());
-                  
-                  // Kiểm tra user có trong group hiện tại không
-                  const isNotInCurrentGroup = !data.find(group => group.id === user_id)?.Members
-                    .some(member => member.User.id === user.id);
-                  
-                  return matchesSearch && isNotInCurrentGroup;
-                })
-                .map((user) => (
-                  <TouchableOpacity 
-                    key={user.id}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      if (!usersSelected.find(u => u.id === user.id)) {
-                        setUsersSelected([...usersSelected, user]);
-                      }
-                      setSearchUser('');
-                    }}
-                  >
-                    <Text style={styles.userName}>{user.name}</Text>
-                    <Text style={styles.userEmail}>{user.email}</Text>
-                  </TouchableOpacity>
-                ))}
-            </ScrollView>
-          </View>
-        )}
-      
-      </View>
 
-      {usersSelected.length > 0 && (
-        <View style={styles.selectedUsersContainer}>
-          <Text style={styles.sectionTitle}>Thành viên đã chọn:</Text>
-          <View style={styles.selectedUsersList}>
-            {usersSelected.map((user) => (
-              <View key={user.id} style={styles.selectedUserItem}>
-                <Text style={styles.selectedUserName}>{user.name}</Text>
-                <TouchableOpacity 
-                  onPress={() => {
-                    setUsersSelected(usersSelected.filter(u => u.id !== user.id));
-                  }}
-                >
-                  <Text style={styles.removeButton}>✕</Text>
-                </TouchableOpacity>
+      {/* Nút + ở góc phải */}
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => setShowAddModal(true)}
+      >
+        <Ionicons name="add" size={32} color="#fff" />
+      </TouchableOpacity>
+
+      {/* Modal thêm group */}
+      <Modal
+        visible={showAddModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowAddModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContentNew}>
+            <View style={styles.modalHeaderNew}>
+              <Text style={styles.modalTitleNew}>Tạo nhóm mới</Text>
+              <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                <Ionicons name="close" size={28} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.formGroup}>
+              <Text style={styles.labelNew}>Tên nhóm</Text>
+              <TextInput 
+                placeholder='Nhập tên nhóm...' 
+                value={title} 
+                onChangeText={setTitle}
+                style={styles.inputNew}
+              />
+            </View>
+            <View style={styles.formGroup}>
+              <Text style={styles.labelNew}>Biểu tượng</Text>
+              <TouchableOpacity 
+                style={styles.iconButtonNew}
+                onPress={() => setShowEmoji(true)}
+              >
+                <Text style={{fontSize: 28}}>{icon || '😀'}</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.formGroup}>
+              <Text style={styles.labelNew}>Loại tiền</Text>
+              <TextInput 
+                placeholder='VD: VND, USD...' 
+                value={currency} 
+                onChangeText={setCurrency}
+                style={styles.inputNew}
+              />
+            </View>
+            <View style={styles.formGroup}>
+              <Text style={styles.labelNew}>Thành viên</Text>
+              <TextInput 
+                placeholder='Tìm kiếm user...' 
+                value={searchUser} 
+                onChangeText={setSearchUser}
+                style={styles.inputNew} 
+              />
+              {searchUser.length > 0 && (
+                <View style={styles.dropdownContainer}>
+                  <ScrollView style={styles.dropdownList}>
+                    {dataUser
+                      .filter(user => {
+                        // Kiểm tra user có match với search text không
+                        const matchesSearch = user.name.toLowerCase().includes(searchUser.toLowerCase());
+                        
+                        // Kiểm tra user có trong group hiện tại không
+                        const isNotInCurrentGroup = !data.find(group => group.id === user_id)?.Members
+                          .some(member => member.User.id === user.id);
+                        
+                        return matchesSearch && isNotInCurrentGroup;
+                      })
+                      .map((user) => (
+                        <TouchableOpacity 
+                          key={user.id}
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            if (!usersSelected.find(u => u.id === user.id)) {
+                              setUsersSelected([...usersSelected, user]);
+                            }
+                            setSearchUser('');
+                          }}
+                        >
+                          <Text style={styles.userName}>{user.name}</Text>
+                          <Text style={styles.userEmail}>{user.email}</Text>
+                        </TouchableOpacity>
+                      ))}
+                  </ScrollView>
+                </View>
+              )}
+            
+            </View>
+
+            {usersSelected.length > 0 && (
+              <View style={styles.selectedUsersContainer}>
+                <Text style={styles.sectionTitle}>Thành viên đã chọn:</Text>
+                <View style={styles.selectedUsersList}>
+                  {usersSelected.map((user) => (
+                    <View key={user.id} style={styles.selectedUserItem}>
+                      <Text style={styles.selectedUserName}>{user.name}</Text>
+                      <TouchableOpacity 
+                        onPress={() => {
+                          setUsersSelected(usersSelected.filter(u => u.id !== user.id));
+                        }}
+                      >
+                        <Text style={styles.removeButton}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
               </View>
-            ))}
+            )}
+            
+            <TouchableOpacity style={styles.confirmButton} onPress={handleCreateGroup}>
+              <Text style={styles.confirmButtonText}>Tạo nhóm</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      )}
-      
-      <Button title='tạo group' onPress={handleCreateGroup} />
+      </Modal>
+
       <FlatList
         data={data}
         renderItem={renderItem}
@@ -593,4 +638,109 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
+  addButton: {
+    position: 'absolute',
+    bottom: 40,
+    right: 20,
+    backgroundColor: '#007AFF',
+    borderRadius: 30,
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+    elevation: 6,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    justifyContent: 'flex-end',
+  },
+  modalContentNew: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    minHeight: '60%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  modalHeaderNew: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  modalTitleNew: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
+  formGroup: {
+    marginBottom: 16,
+  },
+  labelNew: {
+    fontSize: 15,
+    fontWeight: '500',
+    marginBottom: 6,
+    color: '#333',
+  },
+  inputNew: {
+    height: 42,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#fafafa',
+  },
+  iconButtonNew: {
+    width: 50,
+    height: 50,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  confirmButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontSize: 17,
+    fontWeight: 'bold',
+  },
+  // ...existing code...
+  headers: {
+    marginBottom: 24,
+    alignItems: 'flex-start',
+    width: '100%',
+    position: 'relative',
+    zIndex:99999,
+    borderBottomWidth:1,
+    paddingBottom:10,
+  },
+  headerTitle: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#222',
+    letterSpacing: 1,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: '#888',
+    marginTop: 2,
+    marginLeft: 2,
+    fontStyle: 'italic',
+  },
+// ...existing code...
 })
