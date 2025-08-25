@@ -71,7 +71,7 @@ const Expense = ({ group_id, members, transactions, onTransactionCreated,currenc
     // Navigate to detail screen
     router.push({
       pathname:'../TransactionDetail',
-      params:{item}
+      params:{item : JSON.stringify(item)}
 
     });
 
